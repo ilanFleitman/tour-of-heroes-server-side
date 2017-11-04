@@ -1,4 +1,6 @@
 var express = require('express');
+var mogodb = require('mongodb').MongoClient;
+var url = 'mongodb://127.0.0.1:27017/test';
 var router = express.Router();
 
 var heroes = [{'id': 1, 'name': 'batman'}, {'id': 2, 'name': 'spiderman'}, {'id': 3, 'name': 'superman'}];
@@ -7,7 +9,22 @@ var heroes = [{'id': 1, 'name': 'batman'}, {'id': 2, 'name': 'spiderman'}, {'id'
 
 
 router.get('/', function (req, res, next) {
-    res.json(heroes);
+    mogodb.connect(url, function (err, db) {
+       if(err) {
+           db.close();
+           res.send(500);
+           throw err;
+       }
+       db.collection("heroes").find().toArray(function (err, result) {
+           if(err) {
+               db.close();
+               res.send(500);
+           }
+           db.close();
+           res.json(result);
+
+       })
+    });
 });
 
 router.get('/:id', function (req, res, next) {
@@ -26,19 +43,43 @@ router.put('/:id', function (req, res) {
 })
 
 router.post('/', function (req, res) {
-   heroes.push(req.body);
-   res.send('ok');
+    mogodb.connect(url, function (err, db) {
+        if(err) {
+            db.close();
+            res.send(500);
+            throw err;
+        }
+        db.collection("heroes").insertOne({id: parseInt(req.body._id), name: req.body._name}, function (err, result) {
+            if(err) {
+                db.close();
+                res.send(500);
+            }
+            db.close();
+            res.send('ok');
+
+        })
+    });
+
 
 });
 
 router.delete('/:id', function (req, res) {
-    for (let hero of heroes) {
-        if (hero.id === parseInt(req.params.id)) {
-            heroes.splice(heroes.indexOf(hero), 1);
+    mogodb.connect(url, function (err, db) {
+        if(err) {
+            db.close();
+            res.send(500);
+            throw err;
         }
-    }
+        db.collection("heroes").deleteOne({id: parseInt(req.params.id)}, function (err, result) {
+            if(err) {
+                db.close();
+                res.send(500);
+            }
+            db.close();
+            res.sendStatus(200);
 
-    res.send('deleted');
+        })
+    });
 });
 
 router.delete('/?name=term', function (req, res) {

@@ -17,6 +17,6 @@ export class HeroService {
   }
 
   addHero(hero: Hero) {
-    return this.httpClient.post('http://localhost:3000/heroes', JSON.stringify(hero));
+    return this.httpClient.post('http://localhost:3000/heroes', JSON.stringify(hero), {headers: this.headers});
   }
 }
